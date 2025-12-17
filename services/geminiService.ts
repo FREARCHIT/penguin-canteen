@@ -1,18 +1,14 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { GeneratedRecipeResponse } from "../types";
 
-// Note: In a real production environment, this should be handled by a backend proxy 
-// to protect the API key. For this demo/PWA, we use the env variable.
-const apiKey = process.env.API_KEY || '';
-
 export const generateRecipeFromIdea = async (idea: string): Promise<GeneratedRecipeResponse | null> => {
-  if (!apiKey) {
-    console.error("API Key is missing. Please ensure process.env.API_KEY is set.");
+  if (!process.env.API_KEY) {
+    console.error("API Key is missing. Please ensure API_KEY is set in environment variables.");
     return null;
   }
 
   try {
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
