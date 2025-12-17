@@ -1,0 +1,8 @@
+{
+  "name": "企鹅食堂 (Penguin Canteen)",
+  "description": "专为朋友和家庭设计的共享菜谱与膳食计划 App。无需注册，轻松制定每周菜单，自动生成购物清单。",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
