@@ -1,8 +1,8 @@
-const CACHE_NAME = 'penguin-canteen-v1';
+const CACHE_NAME = 'penguin-canteen-v2';
 const urlsToCache = [
   './index.html',
   './manifest.json',
-  './logo.png'
+  './logo.svg'
 ];
 
 // Install event: Cache core files
