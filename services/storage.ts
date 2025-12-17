@@ -2,9 +2,9 @@ import { Recipe, MealPlanItem, Category } from '../types';
 import { createClient, RealtimeChannel } from '@supabase/supabase-js';
 
 // Configuration
-// Prioritize Environment Variables for Vercel deployment flexibility
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://ngaamhimxwgflkiiqbkb.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_KEY || 'sb_publishable_narN8GdzpJEVTVZERb95VQ_6XAPOsgb';
+// Using process.env for environment variables to avoid ImportMeta type issues.
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://ngaamhimxwgflkiiqbkb.supabase.co';
+const SUPABASE_KEY = process.env.VITE_SUPABASE_KEY || 'sb_publishable_narN8GdzpJEVTVZERb95VQ_6XAPOsgb';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
