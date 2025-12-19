@@ -1,74 +1,67 @@
-import { GoogleGenAI, Type } from "@google/genai";
 import { GeneratedRecipeResponse } from "../types";
 
 export const generateRecipeFromIdea = async (idea: string): Promise<GeneratedRecipeResponse | null> => {
-  if (!process.env.API_KEY) {
-    console.error("API Key is missing. Please ensure API_KEY is set in environment variables.");
+  // 注意：在 Vercel 生产环境下，环境变量名为 DEEPSEEK_API_KEY
+  const apiKey = process.env.DEEPSEEK_API_KEY || process.env.API_KEY;
+
+  if (!apiKey) {
+    console.error("API Key is missing.");
     return null;
   }
 
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: `You are a professional chef. Create a structured recipe based on this request: "${idea}". 
-      
-      Requirements:
-      1. Return raw JSON only. Do not wrap in markdown code blocks.
-      2. Language: Chinese (Simplified).
-      3. Category must be one of: "早餐", "正餐", "小食/甜点", "饮品", "其他".
-      4. '正餐' stands for Main Meal (Lunch/Dinner).
-      5. Generate 2-4 short tags (e.g., '快手', '减脂', '下饭', '家常').
-      
-      JSON Structure:
-      {
-        "title": "Recipe Name",
-        "description": "Short appetizing description",
-        "category": "Category Name",
-        "tags": ["tag1", "tag2"],
-        "ingredients": [{"name": "item", "amount": "qty"}],
-        "steps": ["step 1", "step 2"]
-      }`,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            title: { type: Type.STRING },
-            description: { type: Type.STRING },
-            category: { type: Type.STRING },
-            tags: { type: Type.ARRAY, items: { type: Type.STRING } },
-            ingredients: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  name: { type: Type.STRING },
-                  amount: { type: Type.STRING },
-                }
-              }
-            },
-            steps: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING }
-            }
+    const response = await fetch("https://api.deepseek.com/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: "deepseek-chat", 
+        messages: [
+          {
+            role: "system",
+            content: `You are a professional chef. Always respond in JSON format.
+            Requirements:
+            1. Language: Chinese (Simplified).
+            2. Category must be one of: "早餐", "正餐", "小食/甜点", "饮品", "其他".
+            3. Generate 2-4 short tags.`
+          },
+          {
+            role: "user",
+            content: `Create a structured recipe for: "${idea}". 
+            Return the result in this JSON structure:
+            {
+              "title": "string",
+              "description": "string",
+              "category": "string",
+              "tags": ["string"],
+              "ingredients": [{"name": "string", "amount": "string"}],
+              "steps": ["string"]
+            }`
           }
+        ],
+        // 强制要求输出 JSON 格式（DeepSeek 支持此参数）
+        response_format: {
+          type: 'json_object'
         }
-      }
+      })
     });
 
-    let jsonStr = response.text || '';
-    
-    // Robust Cleaning logic: Remove Markdown code blocks (```json ... ```)
-    jsonStr = jsonStr.replace(/^```json\s*/, '').replace(/^```\s*/, '').replace(/\s*```$/, '');
-    
-    if (jsonStr) {
-      return JSON.parse(jsonStr) as GeneratedRecipeResponse;
+    if (!response.ok) {
+      throw new Error(`DeepSeek API error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices[0].message.content;
+
+    if (content) {
+      // DeepSeek 开启 json_object 模式后通常返回的是纯 JSON 字符串
+      return JSON.parse(content) as GeneratedRecipeResponse;
     }
     return null;
   } catch (error) {
-    console.error("Gemini generation error:", error);
+    console.error("DeepSeek generation error:", error);
     throw error;
   }
 };
